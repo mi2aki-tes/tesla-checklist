@@ -41,10 +41,10 @@ export default function ChecklistItem({
   };
 
   const statusColors = {
-    OK: "bg-green-50 border-green-200 text-green-700 hover:bg-green-100",
-    NG: "bg-red-50 border-red-200 text-red-700 hover:bg-red-100",
-    SKIP: "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200",
-    null: "bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600",
+    OK: "bg-green-100 border-green-500 text-green-800 hover:bg-green-200 shadow-sm",
+    NG: "bg-red-100 border-red-500 text-red-800 hover:bg-red-200 shadow-sm",
+    SKIP: "bg-gray-200 border-gray-400 text-gray-800 hover:bg-gray-300 shadow-sm",
+    null: "bg-white border-gray-300 text-gray-500 hover:border-gray-400",
   };
 
   return (
@@ -64,42 +64,43 @@ export default function ChecklistItem({
           <div className="flex gap-2 shrink-0">
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className={`p-2 rounded-full border transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-colors text-xs font-semibold ${
                 memo || photo
-                  ? "bg-gray-50 border-gray-300 text-gray-700"
-                  : "border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                  ? "bg-blue-50 border-blue-200 text-blue-700"
+                  : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
               }`}
             >
-              {(memo || photo) ? <ImageIcon size={18} /> : <MessageSquare size={18} />}
+              {(memo || photo) ? <ImageIcon size={14} /> : <MessageSquare size={14} />}
+              <span>{(memo || photo) ? "入力済" : "メモ / 写真"}</span>
             </button>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-4 items-center">
           <button
             onClick={() => onStatusChange(status === "OK" ? null : "OK")}
-            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border font-medium transition-all duration-200 text-sm ${
+            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-2 font-bold transition-all duration-200 text-sm ${
               status === "OK" ? statusColors.OK : statusColors.null
             }`}
           >
-            <Check size={18} className="mr-1" /> OK
+            <Check size={18} className="mr-1" strokeWidth={3} /> OK
           </button>
           <button
             onClick={() => onStatusChange(status === "NG" ? null : "NG")}
-            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border font-medium transition-all duration-200 text-sm ${
+            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-2 font-bold transition-all duration-200 text-sm ${
               status === "NG" ? statusColors.NG : statusColors.null
             }`}
           >
-            <X size={18} className="mr-1" /> NG
+            <X size={18} className="mr-1" strokeWidth={3} /> NG
           </button>
           <button
             onClick={() => onStatusChange(status === "SKIP" ? null : "SKIP")}
-            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border font-medium transition-all duration-200 text-sm ${
+            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-2 font-bold transition-all duration-200 text-sm ${
               status === "SKIP" ? statusColors.SKIP : statusColors.null
             }`}
           >
-            <Minus size={18} className="mr-1" /> SKIP
+            <Minus size={18} className="mr-1" strokeWidth={3} /> SKIP
           </button>
         </div>
       </div>
