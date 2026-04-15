@@ -88,13 +88,14 @@ export default function Home() {
     window.scrollTo(0, 0);
 
     try {
-      const element = document.getElementById("pdf-content");
+      const element = document.getElementById("print-template");
       if (!element) return;
       
+      // html2canvas capture 
       const canvas = await html2canvas(element, {
         scale: 2, 
         useCORS: true,
-        backgroundColor: "#FFFFFF" // White background for PDF
+        backgroundColor: "#FFFFFF" 
       });
       
       const imgData = canvas.toDataURL('image/jpeg', 0.8);
@@ -106,20 +107,17 @@ export default function Home() {
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      // Calculate height to fit A4 ratio identically
+      let pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      let heightLeft = pdfHeight;
-      let position = 0;
-      
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pdf.internal.pageSize.getHeight();
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - pdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pdf.internal.pageSize.getHeight();
+      // Force it to fit on one page if it's slightly too long
+      const maxPdfHeight = pdf.internal.pageSize.getHeight();
+      if (pdfHeight > maxPdfHeight) {
+         pdfHeight = maxPdfHeight;
       }
+      
+      // Calculate centering (Optional, but let's draw it from top)
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       
       pdf.save(`Tesla_Delivery_Checklist.pdf`);
     } catch (error) {
@@ -222,6 +220,52 @@ export default function Home() {
           >
             <Trash2 size={16} /> データをすべてリセット
           </button>
+        </div>
+      </div>
+
+      {/* Hidden Print Template for PDF Generation */}
+      <div className="fixed -left-[9999px] top-0 pointer-events-none">
+        <div id="print-template" className="w-[800px] bg-white p-10 text-black">
+          <h1 className="text-2xl font-bold border-b-2 border-black pb-2 mb-6">テスラ 納車チェックリスト 結果レポート</h1>
+          
+          <table className="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr className="bg-gray-100 border-b border-gray-400">
+                <th className="py-2 px-3 font-semibold w-24">結果</th>
+                <th className="py-2 px-3 font-semibold">カテゴリ / 項目</th>
+                <th className="py-2 px-3 font-semibold w-1/3">メモ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentItems.map((item) => {
+                const data = state.itemsData[item.id] || { status: null, memo: "", photo: null };
+                
+                // Color formatting for PDF
+                let statusText = "未確認";
+                let statusColor = "text-gray-400";
+                if (data.status === "OK") { statusText = "✅ OK"; statusColor = "text-green-600 font-bold"; }
+                if (data.status === "NG") { statusText = "❌ NG"; statusColor = "text-red-600 font-bold"; }
+                if (data.status === "SKIP") { statusText = "➖ SKIP"; statusColor = "text-gray-500"; }
+
+                return (
+                  <tr key={item.id} className="border-b border-gray-200">
+                    <td className={`py-2 px-3 ${statusColor}`}>{statusText}</td>
+                    <td className="py-2 px-3">
+                      <div className="font-semibold text-gray-800">{item.title}</div>
+                      <div className="text-xs text-gray-500">{item.category}</div>
+                    </td>
+                    <td className="py-2 px-3 text-xs text-gray-700">
+                      {data.memo}
+                      {data.photo && <span className="block mt-1 text-blue-500">[写真添付あり]</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="mt-6 text-right text-sm text-gray-500">
+            確認日: {new Date().toLocaleDateString("ja-JP")} / 進行度: {completedItems}/{totalItems} ({progressPercent}%)
+          </div>
         </div>
       </div>
     </main>
