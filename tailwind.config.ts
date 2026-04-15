@@ -9,8 +9,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        tesla: {
+          red: "#E31937",
+          black: "#171A20",
+          dark: "#0F1115", // a bit darker for backgrounds
+          gray: "#393C41", // tesla UI standard gray
+          light: "#E2E3E3",
+        },
       },
     },
   },
