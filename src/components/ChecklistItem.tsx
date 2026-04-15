@@ -40,13 +40,6 @@ export default function ChecklistItem({
     }
   };
 
-  const statusColors = {
-    OK: "bg-green-100 border-green-500 text-green-800 hover:bg-green-200 shadow-sm",
-    NG: "bg-red-100 border-red-500 text-red-800 hover:bg-red-200 shadow-sm",
-    SKIP: "bg-gray-200 border-gray-400 text-gray-800 hover:bg-gray-300 shadow-sm",
-    null: "bg-white border-gray-300 text-gray-500 hover:border-gray-400",
-  };
-
   return (
     <div className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-3 shadow-sm transition-all duration-300">
       <div className="p-4">
@@ -81,7 +74,9 @@ export default function ChecklistItem({
           <button
             onClick={() => onStatusChange(status === "OK" ? null : "OK")}
             className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-2 font-bold transition-all duration-200 text-sm ${
-              status === "OK" ? statusColors.OK : statusColors.null
+              status === "OK" 
+                ? "bg-green-500 border-green-600 text-white shadow-md transform scale-[1.02]" 
+                : "bg-white border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
             }`}
           >
             <Check size={18} className="mr-1" strokeWidth={3} /> OK
@@ -89,7 +84,9 @@ export default function ChecklistItem({
           <button
             onClick={() => onStatusChange(status === "NG" ? null : "NG")}
             className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-2 font-bold transition-all duration-200 text-sm ${
-              status === "NG" ? statusColors.NG : statusColors.null
+              status === "NG" 
+                ? "bg-red-500 border-red-600 text-white shadow-md transform scale-[1.02]" 
+                : "bg-white border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
             }`}
           >
             <X size={18} className="mr-1" strokeWidth={3} /> NG
@@ -97,7 +94,9 @@ export default function ChecklistItem({
           <button
             onClick={() => onStatusChange(status === "SKIP" ? null : "SKIP")}
             className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-2 font-bold transition-all duration-200 text-sm ${
-              status === "SKIP" ? statusColors.SKIP : statusColors.null
+              status === "SKIP" 
+                ? "bg-gray-600 border-gray-700 text-white shadow-md transform scale-[1.02]" 
+                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
             }`}
           >
             <Minus size={18} className="mr-1" strokeWidth={3} /> SKIP

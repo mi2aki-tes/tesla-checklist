@@ -7,6 +7,7 @@ import { CHECKLIST_ITEMS } from "@/lib/data";
 import ChecklistItemComponent, { ItemState } from "@/components/ChecklistItem";
 import { Download, Car, Trash2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { track } from "@vercel/analytics";
 
 type ItemData = {
   status: ItemState;
@@ -15,19 +16,22 @@ type ItemData = {
 };
 
 type AppState = {
+  selectedModel: string;
   itemsData: Record<string, ItemData>;
 };
 
 const DEFAULT_STATE: AppState = {
+  selectedModel: "Model Y", 
   itemsData: {},
 };
+
+const CAR_MODELS = ["Model 3", "Model Y", "Model S", "Model X", "その他"];
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [state, setState] = useState<AppState>(DEFAULT_STATE);
   const [isExporting, setIsExporting] = useState(false);
 
-  // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("teslaChecklistData");
     if (saved) {
@@ -40,22 +44,17 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  // Save to localStorage
   useEffect(() => {
     if (mounted) {
       localStorage.setItem("teslaChecklistData", JSON.stringify(state));
     }
   }, [state, mounted]);
 
-  if (!mounted) return null; // Avoid hydration mismatch
+  if (!mounted) return null;
 
-  // Current items
   const currentItems = CHECKLIST_ITEMS;
-
-  // Group by category
   const categories = Array.from(new Set(currentItems.map((i) => i.category)));
 
-  // Progress calculation
   const totalItems = currentItems.length;
   const completedItems = currentItems.filter(
     (item) => state.itemsData[item.id]?.status
@@ -85,41 +84,51 @@ export default function Home() {
     if (isExporting) return;
     setIsExporting(true);
     
+    // Analytics tracking for PDF Export
+    track('PDF_Exported', { model: state.selectedModel });
+    
     window.scrollTo(0, 0);
 
     try {
-      const element = document.getElementById("print-template");
-      if (!element) return;
-      
-      // html2canvas capture 
-      const canvas = await html2canvas(element, {
-        scale: 2, 
-        useCORS: true,
-        backgroundColor: "#FFFFFF" 
-      });
-      
-      const imgData = canvas.toDataURL('image/jpeg', 0.8);
-      
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4"
       });
-      
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      // Calculate height to fit A4 ratio identically
-      let pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      // Force it to fit on one page if it's slightly too long
       const maxPdfHeight = pdf.internal.pageSize.getHeight();
-      if (pdfHeight > maxPdfHeight) {
-         pdfHeight = maxPdfHeight;
+
+      // 1. Capture the main table
+      const tableElement = document.getElementById("print-template");
+      if (tableElement) {
+        const canvas = await html2canvas(tableElement, {
+          scale: 2, 
+          useCORS: true,
+          backgroundColor: "#FFFFFF" 
+        });
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+        let pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        if (pdfHeight > maxPdfHeight) pdfHeight = maxPdfHeight;
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+      }
+
+      // 2. Capture all photo pages
+      const photoPages = document.querySelectorAll('.print-photo-page');
+      for (let i = 0; i < photoPages.length; i++) {
+        const pageEl = photoPages[i] as HTMLElement;
+        const canvas = await html2canvas(pageEl, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#FFFFFF"
+        });
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+        pdf.addPage();
+        let pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        if (pdfHeight > maxPdfHeight) pdfHeight = maxPdfHeight;
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       }
       
-      // Calculate centering (Optional, but let's draw it from top)
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      
-      pdf.save(`Tesla_Delivery_Checklist.pdf`);
+      pdf.save(`TeslaDeliveryChecklist_${state.selectedModel}.pdf`);
     } catch (error) {
       console.error("PDF export failed", error);
       alert("PDFの出力に失敗しました。");
@@ -127,6 +136,14 @@ export default function Home() {
       setIsExporting(false);
     }
   };
+
+  // Get items with photos
+  const itemsWithPhotos = currentItems.filter(item => state.itemsData[item.id]?.photo);
+  // Split into chunks of 6
+  const photoChunks = [];
+  for (let i = 0; i < itemsWithPhotos.length; i += 6) {
+    photoChunks.push(itemsWithPhotos.slice(i, i + 6));
+  }
 
   return (
     <main className="min-h-screen text-gray-900 pb-24">
@@ -137,7 +154,7 @@ export default function Home() {
             <div>
               <h1 className="text-xl font-bold flex items-center gap-2 text-gray-900">
                 <Car className="text-gray-700" />
-                納車チェックリスト
+                Tesla納車時チェックリスト
               </h1>
               <p className="text-xs text-gray-500 mt-1">端末に自動保存されます</p>
             </div>
@@ -154,28 +171,41 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Progress Bar */}
-          <div className="mt-4 flex items-center gap-3 text-xs font-medium">
-            <span className="text-gray-500 w-10">{progressPercent}%</span>
-            <div className="h-2 flex-1 bg-gray-200 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gray-800"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              />
+          <div className="flex items-center gap-3">
+             <div className="flex-shrink-0">
+               <span className="text-xs text-gray-500 mr-2">車種:</span>
+               <select 
+                 value={state.selectedModel}
+                 onChange={(e) => setState(prev => ({ ...prev, selectedModel: e.target.value }))}
+                 className="bg-gray-50 border border-gray-200 text-sm rounded-md py-1 px-2 text-gray-700 outline-none focus:border-gray-400"
+                >
+                  {CAR_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
+               </select>
+             </div>
+             
+             {/* Progress Bar */}
+            <div className="flex items-center gap-3 text-xs font-medium flex-1 ml-4 border-l border-gray-200 pl-4">
+              <span className="text-gray-500 w-8">{progressPercent}%</span>
+              <div className="h-2 flex-1 bg-gray-200 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gray-800"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressPercent}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </div>
+              <span className="text-gray-500 w-10 text-right">
+                {completedItems}/{totalItems}
+              </span>
             </div>
-            <span className="text-gray-500 w-12 text-right">
-              {completedItems}/{totalItems}
-            </span>
           </div>
         </div>
       </header>
 
       {/* Main Checklist Content */}
-      <div id="pdf-content" className="max-w-2xl mx-auto px-4 py-8 bg-gray-50">
+      <div className="max-w-2xl mx-auto px-4 py-8 bg-gray-50">
         
-        {/* Warning / Notes section matching user's pdf vibe */}
+        {/* Warning / Notes section */}
         <div className="mb-8 p-4 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-700 leading-relaxed shadow-sm">
           <p className="font-semibold mb-2">納車時のアドバイス💡</p>
           <p>
@@ -223,10 +253,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Hidden Print Template for PDF Generation */}
-      <div className="fixed -left-[9999px] top-0 pointer-events-none">
+      {/* --- HIDDEN PRINT TEMPLATES --- */}
+      <div className="absolute top-0 left-0 -z-50 opacity-0 pointer-events-none">
+        
+        {/* Page 1: Table */}
         <div id="print-template" className="w-[800px] bg-white p-10 text-black">
-          <h1 className="text-2xl font-bold border-b-2 border-black pb-2 mb-6">テスラ 納車チェックリスト 結果レポート</h1>
+          <h1 className="text-2xl font-bold border-b-2 border-black pb-2 mb-6">Tesla納車時チェックリスト（{state.selectedModel}）</h1>
           
           <table className="w-full text-left text-sm border-collapse">
             <thead>
@@ -239,8 +271,6 @@ export default function Home() {
             <tbody>
               {currentItems.map((item) => {
                 const data = state.itemsData[item.id] || { status: null, memo: "", photo: null };
-                
-                // Color formatting for PDF
                 let statusText = "未確認";
                 let statusColor = "text-gray-400";
                 if (data.status === "OK") { statusText = "✅ OK"; statusColor = "text-green-600 font-bold"; }
@@ -249,24 +279,46 @@ export default function Home() {
 
                 return (
                   <tr key={item.id} className="border-b border-gray-200">
-                    <td className={`py-2 px-3 ${statusColor}`}>{statusText}</td>
-                    <td className="py-2 px-3">
+                    <td className={`py-1.5 px-3 ${statusColor}`}>{statusText}</td>
+                    <td className="py-1.5 px-3">
                       <div className="font-semibold text-gray-800">{item.title}</div>
-                      <div className="text-xs text-gray-500">{item.category}</div>
+                      <div className="text-[10px] text-gray-500">{item.category}</div>
                     </td>
-                    <td className="py-2 px-3 text-xs text-gray-700">
+                    <td className="py-1.5 px-3 text-xs text-gray-700">
                       {data.memo}
-                      {data.photo && <span className="block mt-1 text-blue-500">[写真添付あり]</span>}
+                      {data.photo && <span className="block mt-0.5 text-blue-500">[写真添付あり - 次ページ参照]</span>}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-          <div className="mt-6 text-right text-sm text-gray-500">
+          <div className="mt-4 text-right text-xs text-gray-500">
             確認日: {new Date().toLocaleDateString("ja-JP")} / 進行度: {completedItems}/{totalItems} ({progressPercent}%)
           </div>
         </div>
+
+        {/* Pages 2+: Photo Grids */}
+        {photoChunks.map((chunk, pageIndex) => (
+          <div key={`photo-page-${pageIndex}`} className="print-photo-page w-[800px] h-[1130px] bg-white p-10 text-black flex flex-col">
+            <h2 className="text-xl font-bold border-b-2 border-gray-300 pb-2 mb-6">添付写真 ({pageIndex + 1}/{photoChunks.length})</h2>
+            <div className="grid grid-cols-2 gap-6 flex-1 content-start">
+              {chunk.map((item) => (
+                <div key={`photo-${item.id}`} className="flex flex-col gap-2 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="font-bold text-sm text-gray-800">{item.title}</div>
+                  <div className="text-xs text-gray-600 mb-2 truncate">{state.itemsData[item.id]?.memo || "メモなし"}</div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={state.itemsData[item.id]?.photo || ""} 
+                    alt={item.title}
+                    className="w-full h-48 object-cover rounded shadow-sm border border-gray-300 bg-white"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
       </div>
     </main>
   );
