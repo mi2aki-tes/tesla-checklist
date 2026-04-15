@@ -33,8 +33,32 @@ export default function ChecklistItem({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        onPhotoChange(reader.result as string);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+          
+          const MAX_SIZE = 800; // 超軽量化のための最大ピクセル
+          if (width > height && width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          } else if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // 0.6(60%)の品質のJPEGで圧縮して出力することで容量を1/10以下にする
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+          onPhotoChange(dataUrl);
+        };
+        img.src = event.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -73,30 +97,30 @@ export default function ChecklistItem({
         <div className="flex gap-2 mt-4 items-center">
           <button
             onClick={() => onStatusChange(status === "OK" ? null : "OK")}
-            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-2 font-bold transition-all duration-200 text-sm ${
+            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-[3px] font-bold transition-all duration-200 text-sm ${
               status === "OK" 
                 ? "bg-green-500 border-green-600 text-white shadow-md transform scale-[1.02]" 
-                : "bg-white border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300"
+                : "bg-white border-green-400 text-green-700 hover:bg-green-50"
             }`}
           >
             <Check size={18} className="mr-1" strokeWidth={3} /> OK
           </button>
           <button
             onClick={() => onStatusChange(status === "NG" ? null : "NG")}
-            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-2 font-bold transition-all duration-200 text-sm ${
+            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-[3px] font-bold transition-all duration-200 text-sm ${
               status === "NG" 
                 ? "bg-red-500 border-red-600 text-white shadow-md transform scale-[1.02]" 
-                : "bg-white border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300"
+                : "bg-white border-red-400 text-red-700 hover:bg-red-50"
             }`}
           >
             <X size={18} className="mr-1" strokeWidth={3} /> NG
           </button>
           <button
             onClick={() => onStatusChange(status === "SKIP" ? null : "SKIP")}
-            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-2 font-bold transition-all duration-200 text-sm ${
+            className={`flex-1 flex justify-center items-center py-2.5 rounded-lg border-[3px] font-bold transition-all duration-200 text-sm ${
               status === "SKIP" 
                 ? "bg-gray-600 border-gray-700 text-white shadow-md transform scale-[1.02]" 
-                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400"
             }`}
           >
             <Minus size={18} className="mr-1" strokeWidth={3} /> SKIP
@@ -135,7 +159,6 @@ export default function ChecklistItem({
                   <input
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     ref={fileInputRef}
                     onChange={handleFileChange}
                     className="hidden"

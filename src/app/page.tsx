@@ -172,19 +172,8 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-             <div className="flex-shrink-0">
-               <span className="text-xs text-gray-500 mr-2">車種:</span>
-               <select 
-                 value={state.selectedModel}
-                 onChange={(e) => setState(prev => ({ ...prev, selectedModel: e.target.value }))}
-                 className="bg-gray-50 border border-gray-200 text-sm rounded-md py-1 px-2 text-gray-700 outline-none focus:border-gray-400"
-                >
-                  {CAR_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
-               </select>
-             </div>
-             
-             {/* Progress Bar */}
-            <div className="flex items-center gap-3 text-xs font-medium flex-1 ml-4 border-l border-gray-200 pl-4">
+            {/* Progress Bar (Full width now) */}
+            <div className="flex items-center gap-3 text-xs font-medium flex-1">
               <span className="text-gray-500 w-8">{progressPercent}%</span>
               <div className="h-2 flex-1 bg-gray-200 rounded-full overflow-hidden">
                 <motion.div
@@ -205,6 +194,20 @@ export default function Home() {
       {/* Main Checklist Content */}
       <div className="max-w-2xl mx-auto px-4 py-8 bg-gray-50">
         
+        {/* Car Model Selector Card */}
+        <div className="mb-6 bg-white border-2 border-blue-500 rounded-xl p-5 shadow-md transform transition-all duration-300">
+           <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+             <Car className="text-blue-500" /> まずはご自身の車種を選択してください
+           </h2>
+           <select 
+             value={state.selectedModel}
+             onChange={(e) => setState(prev => ({ ...prev, selectedModel: e.target.value }))}
+             className="w-full bg-gray-50 border border-gray-300 rounded-lg py-3 px-4 text-gray-900 font-bold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none shadow-sm cursor-pointer"
+           >
+              {CAR_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
+           </select>
+        </div>
+
         {/* Warning / Notes section */}
         <div className="mb-8 p-4 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-700 leading-relaxed shadow-sm">
           <p className="font-semibold mb-2">納車時のアドバイス💡</p>
@@ -262,10 +265,10 @@ export default function Home() {
           
           <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="bg-gray-100 border-b border-gray-400">
-                <th className="py-2 px-3 font-semibold w-24">結果</th>
-                <th className="py-2 px-3 font-semibold">カテゴリ / 項目</th>
-                <th className="py-2 px-3 font-semibold w-1/3">メモ</th>
+              <tr className="bg-gray-800 text-white border-b-2 border-gray-800">
+                <th className="py-2.5 px-4 font-bold w-24">結果</th>
+                <th className="py-2.5 px-4 font-bold">カテゴリ / 項目</th>
+                <th className="py-2.5 px-4 font-bold w-1/3">メモ</th>
               </tr>
             </thead>
             <tbody>
@@ -273,20 +276,20 @@ export default function Home() {
                 const data = state.itemsData[item.id] || { status: null, memo: "", photo: null };
                 let statusText = "未確認";
                 let statusColor = "text-gray-400";
-                if (data.status === "OK") { statusText = "✅ OK"; statusColor = "text-green-600 font-bold"; }
-                if (data.status === "NG") { statusText = "❌ NG"; statusColor = "text-red-600 font-bold"; }
-                if (data.status === "SKIP") { statusText = "➖ SKIP"; statusColor = "text-gray-500"; }
+                if (data.status === "OK") { statusText = "✅ OK"; statusColor = "text-green-700 font-bold"; }
+                if (data.status === "NG") { statusText = "❌ NG"; statusColor = "text-red-700 font-bold"; }
+                if (data.status === "SKIP") { statusText = "➖ SKIP"; statusColor = "text-gray-600"; }
 
                 return (
-                  <tr key={item.id} className="border-b border-gray-200">
-                    <td className={`py-1.5 px-3 ${statusColor}`}>{statusText}</td>
-                    <td className="py-1.5 px-3">
-                      <div className="font-semibold text-gray-800">{item.title}</div>
-                      <div className="text-[10px] text-gray-500">{item.category}</div>
+                  <tr key={item.id} className="border-b border-gray-200 even:bg-gray-50/80">
+                    <td className={`py-2 px-4 ${statusColor}`}>{statusText}</td>
+                    <td className="py-2 px-4">
+                      <div className="font-bold text-gray-900">{item.title}</div>
+                      <div className="text-[10px] text-gray-500 font-medium">{item.category}</div>
                     </td>
-                    <td className="py-1.5 px-3 text-xs text-gray-700">
+                    <td className="py-2 px-4 text-xs text-gray-700">
                       {data.memo}
-                      {data.photo && <span className="block mt-0.5 text-blue-500">[写真添付あり - 次ページ参照]</span>}
+                      {data.photo && <span className="block mt-0.5 text-blue-600 font-semibold">[写真添付あり - 次ページ参照]</span>}
                     </td>
                   </tr>
                 );
