@@ -256,6 +256,24 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Footer Branding */}
+      <footer className="max-w-2xl mx-auto px-4 pb-12 text-center">
+        <div className="inline-flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-2xl shadow-sm w-full">
+          <p className="text-gray-800 font-bold mb-4">Developed by mi2aki</p>
+          <div className="flex justify-center items-center gap-6">
+            <a href="https://mi2aki.com" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors underline underline-offset-4">
+              Website
+            </a>
+            <a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-gray-500 hover:text-red-600 transition-colors underline underline-offset-4">
+              YouTube
+            </a>
+            <a href="https://x.com/" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-gray-500 hover:text-black transition-colors underline underline-offset-4">
+              X (Twitter)
+            </a>
+          </div>
+        </div>
+      </footer>
+
       {/* --- HIDDEN PRINT TEMPLATES --- */}
       <div className="absolute top-0 left-0 -z-50 opacity-0 pointer-events-none">
         
