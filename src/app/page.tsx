@@ -25,7 +25,7 @@ const DEFAULT_STATE: AppState = {
   itemsData: {},
 };
 
-const CAR_MODELS = ["Model 3", "Model Y", "Model S", "Model X", "その他"];
+const CAR_MODELS = ["Model 3", "Model Y", "Model Y L", "Model S", "Model X", "その他"];
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
