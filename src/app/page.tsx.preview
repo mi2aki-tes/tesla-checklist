@@ -6,7 +6,7 @@ import jsPDF from "jspdf";
 import { CHECKLIST_ITEMS } from "@/lib/data";
 import ChecklistItemComponent, { ItemState } from "@/components/ChecklistItem";
 import { Download, Car, Trash2, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { track } from "@vercel/analytics";
 
 type ItemData = {
@@ -21,7 +21,7 @@ type AppState = {
 };
 
 const DEFAULT_STATE: AppState = {
-  selectedModel: "Model Y",
+  selectedModel: "Model Y", 
   itemsData: {},
 };
 
@@ -37,17 +37,16 @@ export default function Home() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // 旧データ（photo: string | null）を新形式（photos: string[]）に移行
-        if (parsed.itemsData) {
-          Object.keys(parsed.itemsData).forEach((key) => {
-            const item = parsed.itemsData[key];
-            if (item.photo !== undefined && item.photos === undefined) {
-              item.photos = item.photo ? [item.photo] : [];
-              delete item.photo;
-            }
-          });
-        }
-        setState(parsed);
+        // Migration: convert single photo to photos array if necessary
+        const migratedItemsData = { ...parsed.itemsData };
+        Object.keys(migratedItemsData).forEach(id => {
+          if (migratedItemsData[id].photo !== undefined) {
+             const photo = migratedItemsData[id].photo;
+             migratedItemsData[id].photos = photo ? [photo] : [];
+             delete migratedItemsData[id].photo;
+          }
+        });
+        setState({ ...parsed, itemsData: migratedItemsData });
       } catch (e) {
         console.error("Failed to load state", e);
       }
@@ -94,16 +93,16 @@ export default function Home() {
   const exportPDF = async () => {
     if (isExporting) return;
     setIsExporting(true);
-
+    
     track("PDF_Exported", { model: state.selectedModel });
-
+    
     window.scrollTo(0, 0);
 
     try {
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
-        format: "a4",
+        format: "a4"
       });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const maxPdfHeight = pdf.internal.pageSize.getHeight();
@@ -112,9 +111,9 @@ export default function Home() {
       const tableElement = document.getElementById("print-template");
       if (tableElement) {
         const canvas = await html2canvas(tableElement, {
-          scale: 2,
+          scale: 2, 
           useCORS: true,
-          backgroundColor: "#FFFFFF",
+          backgroundColor: "#FFFFFF" 
         });
         const imgData = canvas.toDataURL("image/jpeg", 0.8);
         let pdfHeight = (canvas.height * pdfWidth) / canvas.width;
@@ -129,7 +128,7 @@ export default function Home() {
         const canvas = await html2canvas(pageEl, {
           scale: 2,
           useCORS: true,
-          backgroundColor: "#FFFFFF",
+          backgroundColor: "#FFFFFF"
         });
         const imgData = canvas.toDataURL("image/jpeg", 0.8);
         pdf.addPage();
@@ -137,7 +136,7 @@ export default function Home() {
         if (pdfHeight > maxPdfHeight) pdfHeight = maxPdfHeight;
         pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
       }
-
+      
       pdf.save(`TeslaDeliveryChecklist_${state.selectedModel}.pdf`);
     } catch (error) {
       console.error("PDF export failed", error);
@@ -147,26 +146,26 @@ export default function Home() {
     }
   };
 
-  // 写真があるアイテムとその写真を全て列挙（複数枚対応）
-  type PhotoEntry = { itemTitle: string; itemCategory: string; memo: string; photo: string };
-  const photoEntries: PhotoEntry[] = [];
-  currentItems.forEach((item) => {
+  // Flatten all photos for printing
+  const allPhotosForPDF: { itemId: string; title: string; photo: string; memo: string }[] = [];
+  currentItems.forEach(item => {
     const data = state.itemsData[item.id];
-    if (data?.photos && data.photos.length > 0) {
-      data.photos.forEach((photo) => {
-        photoEntries.push({
-          itemTitle: item.title,
-          itemCategory: item.category,
-          memo: data.memo,
-          photo,
+    if (data && data.photos && data.photos.length > 0) {
+      data.photos.forEach(photo => {
+        allPhotosForPDF.push({
+          itemId: item.id,
+          title: item.title,
+          photo: photo,
+          memo: data.memo
         });
       });
     }
   });
-  // 4枚ずつページ分割（2列×2行）
-  const photoChunks: PhotoEntry[][] = [];
-  for (let i = 0; i < photoEntries.length; i += 4) {
-    photoChunks.push(photoEntries.slice(i, i + 4));
+
+  // Split into chunks of 4 for a more spacious layout
+  const photoChunks = [];
+  for (let i = 0; i < allPhotosForPDF.length; i += 4) {
+    photoChunks.push(allPhotosForPDF.slice(i, i + 4));
   }
 
   return (
@@ -216,19 +215,19 @@ export default function Home() {
 
       {/* Main Checklist Content */}
       <div className="max-w-2xl mx-auto px-4 py-8 bg-gray-50">
-
+        
         {/* Car Model Selector Card */}
         <div className="mb-6 bg-white border-2 border-blue-500 rounded-xl p-5 shadow-md transform transition-all duration-300">
-          <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
-            <Car className="text-blue-500" /> まずはご自身の車種を選択してください
-          </h2>
-          <select
-            value={state.selectedModel}
-            onChange={(e) => setState((prev) => ({ ...prev, selectedModel: e.target.value }))}
-            className="w-full bg-gray-50 border border-gray-300 rounded-lg py-3 px-4 text-gray-900 font-bold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none shadow-sm cursor-pointer"
-          >
-            {CAR_MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
+           <h2 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
+             <Car className="text-blue-500" /> まずはご自身の車種を選択してください
+           </h2>
+           <select 
+             value={state.selectedModel}
+             onChange={(e) => setState(prev => ({ ...prev, selectedModel: e.target.value }))}
+             className="w-full bg-gray-50 border border-gray-300 rounded-lg py-3 px-4 text-gray-900 font-bold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none shadow-sm cursor-pointer"
+           >
+              {CAR_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
+           </select>
         </div>
 
         {/* Warning / Notes section */}
@@ -239,6 +238,14 @@ export default function Home() {
             <br className="mb-2" />
             スタッフさんが手取り足取り説明してくれるわけではないため、出発前にこのリストを使って、大きな傷や明確な不備がないかご自身の目でサクッと確認しておくのがおすすめです！（※軽微なものは後日アプリからでも対応依頼できます）
           </p>
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <p className="flex items-center gap-1 text-red-600 font-bold text-sm">
+              ⚠️ 高画質な写真を残すための推奨手順
+            </p>
+            <p className="text-[11px] mt-1 leading-normal font-medium text-gray-700">
+              ブラウザの制限により、本アプリ内で撮影した写真はスマホの「写真アプリ」へは自動保存されません。高画質な元データを残したい場合は、<b>「通常のカメラアプリで撮影」した後に、本アプリでその写真を選択</b>することを強くおすすめします！
+            </p>
+          </div>
         </div>
 
         {categories.map((category) => (
@@ -258,7 +265,7 @@ export default function Home() {
                       item={item}
                       status={data.status}
                       memo={data.memo}
-                      photos={data.photos || []}
+                      photos={data.photos}
                       onStatusChange={(status) => handleUpdateItem(item.id, { status })}
                       onMemoChange={(memo) => handleUpdateItem(item.id, { memo })}
                       onPhotosChange={(photos) => handleUpdateItem(item.id, { photos })}
@@ -296,19 +303,17 @@ export default function Home() {
 
       {/* --- HIDDEN PRINT TEMPLATES --- */}
       <div className="absolute top-0 left-0 -z-50 opacity-0 pointer-events-none">
-
+        
         {/* Page 1: Table */}
         <div id="print-template" className="w-[800px] bg-white p-10 text-black">
-          <h1 className="text-2xl font-bold border-b-2 border-black pb-2 mb-6">
-            Tesla納車時チェックリスト（{state.selectedModel}）
-          </h1>
-
+          <h1 className="text-2xl font-bold border-b-2 border-black pb-2 mb-6">Tesla納車時チェックリスト（{state.selectedModel}）</h1>
+          
           <table className="w-full text-left text-sm border-collapse">
             <thead>
               <tr className="bg-gray-800 text-white border-b-2 border-gray-800">
-                <th className="py-2.5 px-4 font-bold w-20">結果</th>
-                <th className="py-2.5 px-4 font-bold w-48">カテゴリ / 項目</th>
-                <th className="py-2.5 px-4 font-bold">メモ</th>
+                <th className="py-2.5 px-4 font-bold w-24">結果</th>
+                <th className="py-2.5 px-4 font-bold">カテゴリ / 項目</th>
+                <th className="py-2.5 px-4 font-bold w-1/3">メモ</th>
               </tr>
             </thead>
             <tbody>
@@ -319,24 +324,18 @@ export default function Home() {
                 if (data.status === "OK") { statusText = "✅ OK"; statusColor = "text-green-700 font-bold"; }
                 if (data.status === "NG") { statusText = "❌ NG"; statusColor = "text-red-700 font-bold"; }
                 if (data.status === "SKIP") { statusText = "➖ SKIP"; statusColor = "text-gray-600"; }
-                const photoCount = data.photos?.length || 0;
 
                 return (
                   <tr key={item.id} className="border-b border-gray-200 even:bg-gray-50/80">
-                    <td className={`py-2 px-4 align-top ${statusColor}`}>{statusText}</td>
-                    <td className="py-2 px-4 align-top">
-                      <div className="font-bold text-gray-900 leading-snug">{item.title}</div>
+                    <td className={`py-2 px-4 ${statusColor}`}>{statusText}</td>
+                    <td className="py-2 px-4">
+                      <div className="font-bold text-gray-900">{item.title}</div>
                       <div className="text-[10px] text-gray-500 font-medium">{item.category}</div>
                     </td>
-                    <td className="py-2 px-4 align-top">
-                      {/* メモが長くても折り返して全文表示 */}
-                      <div className="text-xs text-gray-700 whitespace-pre-wrap break-words leading-relaxed">
-                        {data.memo || ""}
-                      </div>
-                      {photoCount > 0 && (
-                        <span className="block mt-1 text-blue-600 font-semibold text-[10px]">
-                          [写真{photoCount}枚 - 次ページ参照]
-                        </span>
+                    <td className="py-2 px-4 text-xs text-gray-700">
+                      <div className="whitespace-pre-wrap">{data.memo}</div>
+                      {data.photos && data.photos.length > 0 && (
+                        <span className="block mt-0.5 text-blue-600 font-semibold">[写真 {data.photos.length}枚 添付あり - 次ページ参照]</span>
                       )}
                     </td>
                   </tr>
@@ -349,35 +348,20 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Pages 2+: Photo Grids（1ページ4枚、各写真に「何枚目か」を表示） */}
+        {/* Pages 2+: Photo Grids */}
         {photoChunks.map((chunk, pageIndex) => (
-          <div
-            key={`photo-page-${pageIndex}`}
-            className="print-photo-page w-[800px] bg-white p-10 text-black flex flex-col"
-            style={{ minHeight: "1130px" }}
-          >
-            <h2 className="text-xl font-bold border-b-2 border-gray-300 pb-2 mb-6">
-              添付写真 ({pageIndex + 1}/{photoChunks.length})
-            </h2>
-            <div className="grid grid-cols-2 gap-6 content-start">
-              {chunk.map((entry, entryIndex) => (
-                <div
-                  key={`photo-${pageIndex}-${entryIndex}`}
-                  className="flex flex-col gap-2 p-4 border border-gray-200 rounded-lg bg-gray-50"
-                >
-                  <div className="font-bold text-sm text-gray-800 leading-snug">{entry.itemTitle}</div>
-                  <div className="text-[10px] text-gray-500">{entry.itemCategory}</div>
-                  {/* メモが切れないよう whitespace-pre-wrap で折り返し */}
-                  {entry.memo && (
-                    <div className="text-xs text-gray-600 whitespace-pre-wrap break-words leading-relaxed">
-                      {entry.memo}
-                    </div>
-                  )}
+          <div key={`photo-page-${pageIndex}`} className="print-photo-page w-[800px] h-[1130px] bg-white p-10 text-black flex flex-col">
+            <h2 className="text-xl font-bold border-b-2 border-gray-300 pb-2 mb-6">添付写真 ({pageIndex + 1}/{photoChunks.length})</h2>
+            <div className="grid grid-cols-2 gap-8 flex-1 content-start">
+              {chunk.map((itemPhoto, idx) => (
+                <div key={`photo-${pageIndex}-${idx}`} className="flex flex-col gap-2 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="font-bold text-sm text-gray-800">{itemPhoto.title}</div>
+                  <div className="text-xs text-gray-600 mb-2 whitespace-pre-wrap">{itemPhoto.memo || "メモなし"}</div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={entry.photo}
-                    alt={entry.itemTitle}
-                    className="w-full h-52 object-cover rounded shadow-sm border border-gray-300 bg-white mt-1"
+                  <img 
+                    src={itemPhoto.photo} 
+                    alt={itemPhoto.title}
+                    className="w-full h-64 object-cover rounded shadow-sm border border-gray-300 bg-white"
                   />
                 </div>
               ))}
