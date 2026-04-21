@@ -171,7 +171,7 @@ export default function ChecklistItem({
                   写真を添付（複数枚OK）
                 </label>
                 <p className="text-[10px] text-gray-400 mb-2">
-                  💡 元データはスマホのカメラロールにも保存されます。PDFの画像は圧縮されます。
+                  💡 ブラウザのカメラで撮ると写真ライブラリに保存されない場合があります。先にカメラアプリで撮影し、ライブラリから選択するのがおすすめです（PDFより高画質な元データも残ります）。
                 </p>
                 <input
                   type="file"

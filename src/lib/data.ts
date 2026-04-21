@@ -30,9 +30,9 @@ export const CHECKLIST_ITEMS: ChecklistItemType[] = [
   { id: "tech_6", category: "③ ソフトウェア・機能", title: "グローブボックスの開閉", description: "モニターからの操作で開くか（次のカテゴリのチェックと併せて確認）" },
 
   // 4. 書類・付属品（グローブボックスを開けた流れで確認）
-  { id: "doc_1", category: "④ 書類・付属品", title: "車検証と取扱説明書", description: "グローブボックス下部を確認" },
+  { id: "doc_1", category: "④ 書類・付属品", title: "車検証と取扱説明書", description: "グローブボックス内を確認" },
   { id: "doc_2", category: "④ 書類・付属品", title: "登録内容の一致", description: "氏名・住所・VIN（車台番号）の相違がないか" },
-  { id: "doc_5", category: "④ 書類・付属品", title: "USBドライブ（事前挿入）", description: "ドライブレコーダー用USBがグローブボックス下部に刺さっているか" },
+  { id: "doc_5", category: "④ 書類・付属品", title: "USBドライブ（事前挿入）", description: "ドライブレコーダー用USBがグローブボックス内に刺さっているか" },
   { id: "doc_3", category: "④ 書類・付属品", title: "カードキー", description: "通常2枚付属しているか" },
   { id: "doc_4", category: "④ 書類・付属品", title: "停止表示器材・発煙筒", description: "三角反射板など指定の備品があるか" },
 
