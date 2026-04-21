@@ -225,7 +225,7 @@ export default function Home() {
           <select
             value={state.selectedModel}
             onChange={(e) => setState((prev) => ({ ...prev, selectedModel: e.target.value }))}
-            className="w-full bg-gray-50 border border-gray-300 rounded-lg py-3 px-4 text-gray-900 font-bold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none shadow-sm cursor-pointer"
+            className="w-full bg-gray-50 border border-gray-300 rounded-lg py-3 px-4 text-base text-gray-900 font-bold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 appearance-none shadow-sm cursor-pointer"
           >
             {CAR_MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>

@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   description: "登録不要のテスラ（Model 3 / Model Y）納車チェックリスト",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

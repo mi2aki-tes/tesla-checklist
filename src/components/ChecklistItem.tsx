@@ -158,7 +158,7 @@ export default function ChecklistItem({
                   メモを残す
                 </label>
                 <textarea
-                  className="w-full bg-white border border-gray-200 rounded-lg p-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors resize-none shadow-sm"
+                  className="w-full bg-white border border-gray-200 rounded-lg p-3 text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors resize-none shadow-sm"
                   rows={2}
                   placeholder="気になる点などを記録..."
                   value={memo}
